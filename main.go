@@ -38,11 +38,17 @@ func main() {
 	}
 
 	for t := time.Tick(time.Duration(*interval) * time.Second); ; <-t {
-		if _, err := s.ChannelMessageSend(id, *message); err != nil {
+		m, err := s.ChannelMessageSend(id, *message)
+		if err != nil {
 			log.Print(err)
-		} else {
-			log.Print("sent message")
 		}
+		log.Print("sent message")
+
+		err = s.ChannelMessageDelete(id, m.ID)
+		if err != nil {
+			log.Print(err)
+		}
+		log.Print("deleted message")
 	}
 }
 

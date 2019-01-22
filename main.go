@@ -15,6 +15,7 @@ var (
 	channel  = flag.String("chan", "", "channel to join")
 	message  = flag.String("msg", "_", "message to be sent")
 	interval = flag.Int64("int", 60, "interval between messages in seconds")
+	delete   = flag.Bool("del", false, "delete every message as soon as it's been sent")
 )
 
 func main() {
@@ -44,11 +45,13 @@ func main() {
 		}
 		log.Print("sent message")
 
-		err = s.ChannelMessageDelete(id, m.ID)
-		if err != nil {
-			log.Print(err)
+		if *delete {
+			err = s.ChannelMessageDelete(id, m.ID)
+			if err != nil {
+				log.Print(err)
+			}
+			log.Print("deleted message")
 		}
-		log.Print("deleted message")
 	}
 }
 

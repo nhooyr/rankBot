@@ -22,6 +22,7 @@ var (
 	delete    = flag.Bool("del", false, "delete every message as soon as it's been sent")
 	idiomFile = flag.String("idiom", "", "file containing a set of messages")
 	runtime   = flag.Duration("runtime", 0, "running time")
+	meanDelay = flag.Duration("mean-delay", 0, "mean additional delay")
 )
 
 func main() {
@@ -60,7 +61,7 @@ func main() {
 	rand.Seed(time.Now().Unix())
 	stop := time.Tick(*runtime)
 loop:
-	for t := time.Tick(*interval); ; <-t {
+	for {
 		m := idiom[rand.Intn(len(idiom))]
 
 		msg, err := s.ChannelMessageSend(id, m)
@@ -82,6 +83,13 @@ loop:
 			break loop
 		default:
 		}
+
+		dt := *interval
+		if *meanDelay != 0 {
+			s := rand.ExpFloat64() * meanDelay.Seconds()
+			dt += time.Duration(s) * time.Second
+		}
+		time.Sleep(dt)
 	}
 }
 

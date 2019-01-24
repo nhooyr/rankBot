@@ -1,40 +1,71 @@
 # rankbot
 
-Very simple rank bot for [mee6](https://mee6.xyz) on discord.
-
-Do not make an issue asking for help on how to install or use this. I will only respond to bug reports.
-
-Google how to install and use Go.
+Very simple rank bot for [Discord](https://discordapp.com) channels.
 
 ## Why?
-With mee6, each time you post a message you get a random number of XP between 5 and 10.
 
-To avoid flood, mee6 only allows you to gain xp once per minute.
-
-This bot sends out a message every minute allowing you to rank up very fast.
+In some channels you get some experience points for every message you send.
 
 ## Install
-```zsh
-go get github.com/nhooyr/rankbot
-```
+
+    go get github.com/nhooyr/rankbot
 
 ## Usage
-```zsh
-[$] rankbot --help
-Usage of rankbot:
-  -chan string
-        guild channel
-  -email string
-        account email
-  -guild string
-        account guild
-  -msg string
-        message to be sent (default "_")
-  -pass string
-        account password
-```
 
-### Example usage
-```zsh
-rankbot -email="me@domain.com" -pass="secret" -guild="server" -chan="channel"
-```
+    Usage of rankbot:
+      -chan string
+        	channel to join
+      -del
+        	delete every message as soon as it's been sent
+      -email string
+        	account email
+      -guild string
+        	guild (server) to join
+      -idiom string
+        	file containing a set of messages
+      -int duration
+        	interval between messages (default 1m0s)
+      -mean-delay duration
+        	mean additional delay
+      -msg string
+        	message to be sent (default "_")
+      -pass string
+        	account password
+      -runtime duration
+        	running time
+
+Say we want to send messages to the "random" channel on the "Yellow Team"
+server. We can get away with the following invocation:
+
+    rankbot -email user@example.com \
+            -pass password          \
+            -guild 'Yellow Team'    \
+            -chan random
+
+This will send a message containing "_", every minute, until terminated.
+
+To send a custom message:
+
+    -msg "Hello from rankbot"
+
+To pick messages randomly from the lines of a file:
+
+    -idiom sayings.txt
+
+To delete messages after sending them:
+
+    -del
+
+To choose a different interval between messages:
+
+    -int 1s       # A message per second.
+    -int 1h       # A message per hour.
+    -int 2m30s    # A message every 2 minutes and a half.
+
+To *further* delay messages by a random amount of seconds:
+
+    -mean-delay 5m    # The average delay (added to the interval).
+
+To set a run time, after which rankbot will terminate:
+
+    -runtime 10h      # Run for 10 hours before exiting.

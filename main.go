@@ -21,6 +21,7 @@ var (
 	interval  = flag.Duration("int", 60*time.Second, "interval between messages")
 	delete    = flag.Bool("del", false, "delete every message as soon as it's been sent")
 	idiomFile = flag.String("idiom", "", "file containing a set of messages")
+	runtime   = flag.Duration("runtime", 0, "running time")
 )
 
 func main() {
@@ -57,6 +58,8 @@ func main() {
 	}
 
 	rand.Seed(time.Now().Unix())
+	stop := time.Tick(*runtime)
+loop:
 	for t := time.Tick(*interval); ; <-t {
 		m := idiom[rand.Intn(len(idiom))]
 
@@ -72,6 +75,12 @@ func main() {
 				log.Print(err)
 			}
 			log.Print("deleted message")
+		}
+
+		select {
+		case <-stop:
+			break loop
+		default:
 		}
 	}
 }

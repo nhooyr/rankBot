@@ -18,7 +18,7 @@ var (
 	guild     = flag.String("guild", "", "guild (server) to join")
 	channel   = flag.String("chan", "", "channel to join")
 	message   = flag.String("msg", "_", "message to be sent")
-	interval  = flag.Int64("int", 60, "interval between messages in seconds")
+	interval  = flag.Duration("int", 60*time.Second, "interval between messages")
 	delete    = flag.Bool("del", false, "delete every message as soon as it's been sent")
 	idiomFile = flag.String("idiom", "", "file containing a set of messages")
 )
@@ -57,7 +57,7 @@ func main() {
 	}
 
 	rand.Seed(time.Now().Unix())
-	for t := time.Tick(time.Duration(*interval) * time.Second); ; <-t {
+	for t := time.Tick(*interval); ; <-t {
 		m := idiom[rand.Intn(len(idiom))]
 
 		msg, err := s.ChannelMessageSend(id, m)

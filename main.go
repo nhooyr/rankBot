@@ -41,6 +41,9 @@ func main() {
 			log.Fatal(err)
 		}
 		idiom = readIdiom(f)
+		if len(idiom) == 0 {
+			log.Fatal("empty idiom file: no messages to send")
+		}
 	}
 
 	s, err := discordgo.New(*email, *pass)

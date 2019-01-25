@@ -66,14 +66,14 @@ loop:
 
 		msg, err := s.ChannelMessageSend(id, m)
 		if err != nil {
-			log.Print(err)
+			log.Fatal(err)
 		}
 		log.Print("sent message")
 
 		if *delete {
 			err = s.ChannelMessageDelete(id, msg.ID)
 			if err != nil {
-				log.Print(err)
+				log.Fatal(err)
 			}
 			log.Print("deleted message")
 		}

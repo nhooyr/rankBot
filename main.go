@@ -1,7 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"flag"
+	"io"
+	"math/rand"
+	"os"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
@@ -9,12 +13,16 @@ import (
 )
 
 var (
-	email    = flag.String("email", "", "account email")
-	pass     = flag.String("pass", "", "account password")
-	guild    = flag.String("guild", "", "guild (server) to join")
-	channel  = flag.String("chan", "", "channel to join")
-	message  = flag.String("msg", "_", "message to be sent")
-	interval = flag.Int64("int", 60, "interval between messages in seconds")
+	email     = flag.String("email", "", "account email")
+	pass      = flag.String("pass", "", "account password")
+	guild     = flag.String("guild", "", "guild (server) to join")
+	channel   = flag.String("chan", "", "channel to join")
+	message   = flag.String("msg", "_", "message to be sent")
+	interval  = flag.Duration("int", 60*time.Second, "interval between messages")
+	delete    = flag.Bool("del", false, "delete every message as soon as it's been sent")
+	idiomFile = flag.String("idiom", "", "file containing a set of messages")
+	runtime   = flag.Duration("runtime", 0, "running time")
+	meanDelay = flag.Duration("mean-delay", 0, "mean additional delay")
 )
 
 func main() {
@@ -22,6 +30,22 @@ func main() {
 	if *email == "" || *pass == "" {
 		log.Fatal("please provide an email and password")
 	}
+	if *idiomFile != "" && *message != "_" {
+		log.Fatal("provide either -msg or -idiom")
+	}
+
+	var idiom []string = []string{*message}
+	if *idiomFile != "" {
+		f, err := os.Open(*idiomFile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		idiom = readIdiom(f)
+		if len(idiom) == 0 {
+			log.Fatal("empty idiom file: no messages to send")
+		}
+	}
+
 	s, err := discordgo.New(*email, *pass)
 	if err != nil {
 		log.Fatal(err)
@@ -37,13 +61,47 @@ func main() {
 		log.Fatal("could not find channel")
 	}
 
-	for t := time.Tick(time.Duration(*interval) * time.Second); ; <-t {
-		if _, err := s.ChannelMessageSend(id, *message); err != nil {
-			log.Print(err)
-		} else {
-			log.Print("sent message")
+	rand.Seed(time.Now().Unix())
+	stop := time.Tick(*runtime)
+loop:
+	for {
+		m := idiom[rand.Intn(len(idiom))]
+
+		msg, err := s.ChannelMessageSend(id, m)
+		if err != nil {
+			log.Fatal(err)
 		}
+		log.Print("sent message")
+
+		if *delete {
+			err = s.ChannelMessageDelete(id, msg.ID)
+			if err != nil {
+				log.Fatal(err)
+			}
+			log.Print("deleted message")
+		}
+
+		select {
+		case <-stop:
+			break loop
+		default:
+		}
+
+		dt := *interval
+		if *meanDelay != 0 {
+			s := rand.ExpFloat64() * meanDelay.Seconds()
+			dt += time.Duration(s) * time.Second
+		}
+		time.Sleep(dt)
 	}
+}
+
+func readIdiom(r io.Reader) (idiom []string) {
+	ln := bufio.NewScanner(r)
+	for ln.Scan() {
+		idiom = append(idiom, ln.Text())
+	}
+	return
 }
 
 func findGuild(s *discordgo.Session) *discordgo.UserGuild {
